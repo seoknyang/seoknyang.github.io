@@ -61,9 +61,62 @@ PortPolio_csn/
   - TechStackInput: 검색 드롭다운, 직접 입력, 이미지 업로드 (Sanity 에셋)
   - techStackOptions.js: 35개 기술 선택 목록 (오타 방지)
 
-## 다음 작업 (미완료)
-- [ ] Sanity Studio 배포 (`cd sanity-studio && npm run deploy`)
-- [ ] GitHub Pages 최종 배포 (`git push` to main)
+## 완료된 작업 (추가)
+- [x] Sanity Studio 배포 → https://seoknyang.sanity.studio/
+- [x] GitHub Pages 최종 배포 → https://seoknyang.github.io
+
+---
+
+## 다음 계획: 포트폴리오 페이지 개편 (이력서 형식)
+
+### 설계 방향
+섹션을 타입별로 고정하지 않고, **섹션 타이틀을 자유 입력**하는 유연한 구조.
+섹션 내 아이템은 공통 필드를 공유하고, 필요한 것만 채워서 사용.
+
+**사용 예시:**
+- 타이틀 "경력" → 각 아이템에 시작일/종료일/제목(회사명)/설명(업무내용) 입력
+- 타이틀 "학력" → 시작일/종료일/제목(학교명)/부가정보(졸업여부·졸업일자) 입력
+- 타이틀 "자격/어학/수상" → 날짜/제목(자격명)/설명(합격·점수)/부가정보(자격번호) 입력
+- 타이틀 "경험/활동/교육" → 시작일/종료일/제목(활동명) 입력
+
+### Sanity 스키마 구조 (`profile` 싱글톤)
+```
+profile {
+  intro        text                  소개 텍스트
+  links        array of {            외부 링크
+                 label: string
+                 url: url
+               }
+  techStack    array of techItem     기존 TechBadge 재사용
+  sections     array of {            자유 섹션 목록 (순서 조정 가능)
+                 title: string       "경력" / "학력" / "자격증" 등 자유 입력
+                 items: array of {
+                   startDate: date   시작일 (선택)
+                   endDate:   date   종료일 (선택)
+                   date:      date   단일 날짜 (선택, 자격 취득일 등)
+                   name:      string 제목/회사명/학교명/자격명
+                   description: text 설명/업무내용/점수 등 (선택)
+                   note:      string 부가정보: 자격번호/졸업여부 등 (선택)
+                 }
+               }
+}
+```
+
+### 구현 단계
+#### Phase 1: Sanity 스키마
+- [ ] `sanity-studio/schemaTypes/profile.js` 생성
+- [ ] `schemaTypes/index.js`에 profile 등록
+- [ ] Sanity Studio에서 profile 문서 1개 생성 및 데이터 입력
+
+#### Phase 2: 기존 프로젝트 목록 분리
+- [ ] 기존 `Portfolio.jsx`(프로젝트 목록)를 `Projects.jsx`로 이름 변경
+- [ ] App.jsx 라우팅: `/portfolio` → 이력서 페이지, `/projects` → 프로젝트 목록
+- [ ] Layout.jsx 네비게이션 메뉴 업데이트
+
+#### Phase 3: React 이력서 페이지 구현
+- [ ] `Portfolio.jsx` 새로 작성 (profile 데이터 fetch)
+- [ ] 소개, 링크, 기술스택 섹션 UI
+- [ ] sections 배열 렌더링: 타이틀 + 아이템 목록 (타임라인 스타일)
 
 ## Sanity 정보
 - **프로젝트명:** PortPolio_csn
