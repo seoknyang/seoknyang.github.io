@@ -3,7 +3,7 @@ import { Link, Outlet } from 'react-router-dom'
 function Layout() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <nav className="flex items-center justify-between px-8 py-4 border-b border-gray-800">
+      <nav className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-gray-800">
         <Link to="/" className="text-xl font-bold text-white hover:text-indigo-400 transition-colors">
           seoknyang
         </Link>
@@ -13,7 +13,7 @@ function Layout() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-8 py-12">
+      <main className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
         <Outlet />
       </main>
 
