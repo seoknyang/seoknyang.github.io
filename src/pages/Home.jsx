@@ -16,6 +16,12 @@ function Home() {
           포트폴리오 보기
         </Link>
         <Link
+          to="/projects"
+          className="px-6 py-3 border border-gray-600 hover:border-gray-400 rounded-lg transition-colors"
+        >
+          프로젝트 보기
+        </Link>
+        <Link
           to="/blog"
           className="px-6 py-3 border border-gray-600 hover:border-gray-400 rounded-lg transition-colors"
         >
