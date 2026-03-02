@@ -12,7 +12,7 @@ function Projects() {
         _id,
         title,
         description,
-        "techStack": techStack[]{name, "iconUrl": icon.asset->url},
+        "techStack": techStack[defined(name)]{name, "iconUrl": icon.asset->url},
         githubUrl,
         liveUrl,
         "thumbnail": thumbnail.asset->url

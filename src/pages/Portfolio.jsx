@@ -17,7 +17,7 @@ function Portfolio() {
       .fetch(`*[_type == "profile"][0]{
         intro,
         links,
-        "techStack": techStack[]{name, "iconUrl": icon.asset->url},
+        "techStack": techStack[defined(name)]{name, "iconUrl": icon.asset->url},
         sections[]{
           title,
           items[]{startDate, endDate, date, name, description, note}
