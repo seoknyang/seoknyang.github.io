@@ -104,19 +104,20 @@ profile {
 
 ### 구현 단계
 #### Phase 1: Sanity 스키마
-- [ ] `sanity-studio/schemaTypes/profile.js` 생성
-- [ ] `schemaTypes/index.js`에 profile 등록
+- [x] `sanity-studio/schemaTypes/profile.js` 생성
+- [x] `schemaTypes/index.js`에 profile 등록
+- [x] `sanity.config.js` structure 설정 (profile 싱글톤)
 - [ ] Sanity Studio에서 profile 문서 1개 생성 및 데이터 입력
 
 #### Phase 2: 기존 프로젝트 목록 분리
-- [ ] 기존 `Portfolio.jsx`(프로젝트 목록)를 `Projects.jsx`로 이름 변경
-- [ ] App.jsx 라우팅: `/portfolio` → 이력서 페이지, `/projects` → 프로젝트 목록
-- [ ] Layout.jsx 네비게이션 메뉴 업데이트
+- [x] 기존 `Portfolio.jsx`(프로젝트 목록)를 `Projects.jsx`로 복사
+- [x] App.jsx 라우팅: `/portfolio` → 이력서 페이지, `/projects` → 프로젝트 목록
+- [x] Layout.jsx 네비게이션 메뉴 업데이트 (Portfolio / Projects / Blog)
 
 #### Phase 3: React 이력서 페이지 구현
-- [ ] `Portfolio.jsx` 새로 작성 (profile 데이터 fetch)
-- [ ] 소개, 링크, 기술스택 섹션 UI
-- [ ] sections 배열 렌더링: 타이틀 + 아이템 목록 (타임라인 스타일)
+- [x] `Portfolio.jsx` 새로 작성 (profile 데이터 fetch)
+- [x] 소개, 링크, 기술스택 섹션 UI
+- [x] sections 배열 렌더링: 타이틀 + 아이템 목록 (타임라인 스타일)
 
 ## Sanity 정보
 - **프로젝트명:** PortPolio_csn

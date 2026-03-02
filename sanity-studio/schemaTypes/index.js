@@ -1,4 +1,5 @@
 import {portfolio} from './portfolio'
 import {post} from './post'
+import {profile} from './profile'
 
-export const schemaTypes = [portfolio, post]
+export const schemaTypes = [profile, portfolio, post]

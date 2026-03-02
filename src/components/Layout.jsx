@@ -9,6 +9,7 @@ function Layout() {
         </Link>
         <div className="flex gap-6">
           <Link to="/portfolio" className="text-gray-300 hover:text-white transition-colors">Portfolio</Link>
+          <Link to="/projects" className="text-gray-300 hover:text-white transition-colors">Projects</Link>
           <Link to="/blog" className="text-gray-300 hover:text-white transition-colors">Blog</Link>
         </div>
       </nav>
