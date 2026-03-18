@@ -107,7 +107,7 @@ profile {
 - [x] `sanity-studio/schemaTypes/profile.js` 생성
 - [x] `schemaTypes/index.js`에 profile 등록
 - [x] `sanity.config.js` structure 설정 (profile 싱글톤)
-- [ ] Sanity Studio에서 profile 문서 1개 생성 및 데이터 입력
+- [x] Sanity Studio에서 profile 문서 1개 생성 및 데이터 입력
 
 #### Phase 2: 기존 프로젝트 목록 분리
 - [x] 기존 `Portfolio.jsx`(프로젝트 목록)를 `Projects.jsx`로 복사
@@ -118,6 +118,23 @@ profile {
 - [x] `Portfolio.jsx` 새로 작성 (profile 데이터 fetch)
 - [x] 소개, 링크, 기술스택 섹션 UI
 - [x] sections 배열 렌더링: 타이틀 + 아이템 목록 (타임라인 스타일)
+- [x] Home.jsx에 "프로젝트 보기" 버튼 추가
+- [x] techStack null 항목 에러 수정 (GROQ `[defined(name)]` 필터 적용)
+
+---
+
+## 다음 계획: 사이트 리브랜딩 & UI 현대화
+
+### 변경 사항
+- 왼쪽 상단 사이트명 "seoknyang" → **"CSN TechLog"** 로 변경 (`Layout.jsx`)
+- 전체 UI 현대화 (디자인 개선)
+
+### UI 현대화 방향 (미정, 다음 세션에서 구체화)
+- 전체적인 레이아웃/타이포그래피 개선
+- 네비게이션 스타일 개선
+- 페이지별 UI 개선 (Home, Portfolio, Projects, Blog)
+
+---
 
 ## Sanity 정보
 - **프로젝트명:** PortPolio_csn
