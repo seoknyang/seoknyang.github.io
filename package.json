@@ -12,6 +12,7 @@
   "dependencies": {
     "@portabletext/react": "^6.0.2",
     "@sanity/client": "^7.16.0",
+    "@tailwindcss/typography": "^0.5.19",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1"
