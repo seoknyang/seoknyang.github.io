@@ -3,6 +3,39 @@ import { useParams, Link } from 'react-router-dom'
 import { PortableText } from '@portabletext/react'
 import client from '../sanityClient'
 import TechBadge from '../components/TechBadge'
+import { getProject } from '../lib/project'
+
+// 본문에 들어간 이미지와 코드 블록 렌더링 (기본 PortableText는 둘 다 그리지 않는다)
+const bodyComponents = {
+  types: {
+    image: ({ value }) => {
+      if (!value?.url) return null
+      const caption = value.caption || value.alt
+      return (
+        <figure className="my-8">
+          <a href={value.url} target="_blank" rel="noreferrer">
+            <img
+              src={`${value.url}?w=1400&fit=max&auto=format`}
+              alt={value.alt || caption || ''}
+              width={value.width}
+              height={value.height}
+              loading="lazy"
+              className="mx-auto w-auto max-w-full h-auto max-h-[32rem] rounded-lg border border-gray-800 my-0"
+            />
+          </a>
+          {caption && (
+            <figcaption className="text-center text-sm text-gray-400 mt-2">{caption}</figcaption>
+          )}
+        </figure>
+      )
+    },
+    code: ({ value }) => (
+      <pre className="overflow-x-auto">
+        <code>{value?.code}</code>
+      </pre>
+    ),
+  },
+}
 
 function BlogPost() {
   const { slug } = useParams()
@@ -15,9 +48,18 @@ function BlogPost() {
         `*[_type == "post" && slug.current == $slug][0] {
           title,
           publishedAt,
+          project,
           tags,
           "techStack": techStack[]{name, "iconUrl": icon.asset->url},
-          body
+          body[]{
+            ...,
+            _type == "image" => {
+              ...,
+              "url": asset->url,
+              "width": asset->metadata.dimensions.width,
+              "height": asset->metadata.dimensions.height
+            }
+          }
         }`,
         { slug }
       )
@@ -29,11 +71,21 @@ function BlogPost() {
   if (loading) return <p className="text-gray-400">불러오는 중...</p>
   if (!post) return <p className="text-gray-400">글을 찾을 수 없습니다.</p>
 
+  const project = getProject(post)
+
   return (
     <div className="max-w-2xl mx-auto">
-      <Link to="/blog" className="text-sm text-gray-500 hover:text-white mb-6 inline-block">
-        ← 목록으로
-      </Link>
+      <div className="flex flex-wrap gap-4 mb-6 text-sm">
+        <Link to="/blog" className="text-gray-500 hover:text-white">
+          ← 목록으로
+        </Link>
+        <Link
+          to={`/blog?project=${encodeURIComponent(project)}`}
+          className="text-indigo-300 hover:text-indigo-200"
+        >
+          {project} 글 모아 보기
+        </Link>
+      </div>
       <h1 className="text-2xl md:text-3xl font-bold mb-2">{post.title}</h1>
       <p className="text-xs text-gray-500 mb-4">
         {new Date(post.publishedAt).toLocaleDateString('ko-KR')}
@@ -57,8 +109,8 @@ function BlogPost() {
           </div>
         </div>
       )}
-      <div className="prose prose-invert max-w-none">
-        <PortableText value={post.body} />
+      <div className="prose prose-invert max-w-none prose-code:before:content-none prose-code:after:content-none">
+        <PortableText value={post.body} components={bodyComponents} />
       </div>
     </div>
   )

@@ -26,6 +26,19 @@ export const post = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'project',
+      title: '프로젝트',
+      type: 'string',
+      description: '블로그 목록에서 프로젝트별로 묶어 보여 줄 이름 (예: SnapBrick)',
+    }),
+    defineField({
+      name: 'coverImage',
+      title: '대표 이미지',
+      type: 'image',
+      description: '비워 두면 본문의 첫 번째 이미지를 목록 썸네일로 쓴다',
+      options: {hotspot: true},
+    }),
+    defineField({
       name: 'tags',
       title: '태그',
       type: 'array',
@@ -67,7 +80,22 @@ export const post = defineType({
               title: '대체 텍스트',
               type: 'string',
             }),
+            defineField({
+              name: 'caption',
+              title: '캡션',
+              type: 'string',
+            }),
           ],
+        },
+        {
+          type: 'object',
+          name: 'code',
+          title: '코드',
+          fields: [
+            defineField({name: 'language', title: '언어', type: 'string'}),
+            defineField({name: 'code', title: '코드', type: 'text'}),
+          ],
+          preview: {select: {title: 'language', subtitle: 'code'}},
         },
       ],
     }),
