@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import client from '../sanityClient'
-import { getProject, OTHER_PROJECT } from '../lib/project'
+import { GlowCard, Loading, PageHeader } from '../components/ui'
+import { POST_SUMMARY_QUERY, formatDate, groupProjects, withProject } from '../lib/project'
 
 const chipClass = (active) =>
   `text-xs px-3 py-1 rounded-full border transition ${
     active
       ? 'bg-white text-black border-white'
-      : 'border-gray-600 text-gray-400 hover:border-gray-400 hover:text-gray-200'
+      : 'border-white/15 text-gray-400 hover:border-white/40 hover:text-gray-200'
   }`
 
 const projectCardClass = (active) =>
-  `text-left rounded-xl border px-4 py-3 transition ${
-    active ? 'border-indigo-400 bg-indigo-500/10' : 'border-gray-700 hover:border-gray-500'
+  `text-left rounded-2xl border px-4 py-3 transition ${
+    active
+      ? 'border-indigo-300/60 bg-indigo-500/15 shadow-[0_0_30px_-10px_rgb(129_140_248_/_0.8)]'
+      : 'border-white/10 bg-panel/60 hover:border-white/30'
   }`
 
 function Blog() {
@@ -24,33 +27,13 @@ function Blog() {
 
   useEffect(() => {
     client
-      .fetch(`*[_type == "post"] | order(publishedAt desc) {
-        _id,
-        title,
-        "slug": slug.current,
-        publishedAt,
-        project,
-        tags,
-        summary,
-        "coverUrl": coalesce(coverImage.asset->url, body[_type == "image"][0].asset->url)
-      }`)
-      .then((data) => setPosts(data.map((p) => ({ ...p, project: getProject(p) }))))
+      .fetch(POST_SUMMARY_QUERY)
+      .then((data) => setPosts(withProject(data)))
       .catch((err) => console.error('Blog fetch error:', err))
       .finally(() => setLoading(false))
   }, [])
 
-  // 프로젝트별 글 수와 최근 글 날짜. 최근에 쓴 프로젝트가 앞, 기타는 맨 뒤
-  const projects = Object.values(
-    posts.reduce((acc, p) => {
-      const entry = acc[p.project] ?? { name: p.project, count: 0, latest: p.publishedAt }
-      entry.count += 1
-      if (p.publishedAt > entry.latest) entry.latest = p.publishedAt
-      acc[p.project] = entry
-      return acc
-    }, {})
-  ).sort((a, b) =>
-    a.name === OTHER_PROJECT ? 1 : b.name === OTHER_PROJECT ? -1 : b.latest.localeCompare(a.latest)
-  )
+  const projects = groupProjects(posts)
 
   const selectProject = (name) => {
     setSelectedTag(null)
@@ -65,17 +48,19 @@ function Blog() {
     ? projectPosts.filter((p) => p.tags?.includes(selectedTag))
     : projectPosts
 
-  if (loading) return <p className="text-gray-400">불러오는 중...</p>
+  if (loading) return <Loading />
 
   if (posts.length === 0)
     return <p className="text-gray-400">작성된 글이 없습니다.</p>
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Blog</h1>
+    <div className="max-w-4xl">
+      <PageHeader label="Writing" title="Blog">
+        프로젝트를 만들며 매일 남기는 개발 기록입니다.
+      </PageHeader>
 
       <section className="mb-8">
-        <p className="text-xs text-gray-500 mb-3">프로젝트</p>
+        <p className="font-mono text-xs tracking-widest text-gray-500 uppercase mb-3">Projects</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <button onClick={() => selectProject(null)} className={projectCardClass(selectedProject === null)}>
             <p className="font-semibold truncate">전체</p>
@@ -89,7 +74,7 @@ function Blog() {
             >
               <p className="font-semibold truncate" title={project.name}>{project.name}</p>
               <p className="text-xs text-gray-500 mt-1">
-                {project.count}개의 글, 최근 {new Date(project.latest).toLocaleDateString('ko-KR')}
+                {project.count}개의 글, 최근 {formatDate(project.latest)}
               </p>
             </button>
           ))}
@@ -97,7 +82,7 @@ function Blog() {
       </section>
 
       {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-8">
+        <div className="flex flex-wrap gap-2 mb-10">
           <button onClick={() => setSelectedTag(null)} className={chipClass(selectedTag === null)}>
             전체 태그
           </button>
@@ -113,24 +98,25 @@ function Blog() {
         </div>
       )}
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5">
         {filteredPosts.map((post) => (
-          <Link
+          <GlowCard
             key={post._id}
+            as={Link}
             to={`/blog/${post.slug}`}
-            className="flex flex-col-reverse sm:flex-row gap-5 border border-gray-700 rounded-xl p-6 hover:border-gray-500 transition"
+            className="group flex flex-col-reverse sm:flex-row gap-5 p-6"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 mb-1">
+              <p className="text-xs text-gray-500 mb-2">
                 {!selectedProject && <span className="text-indigo-300 mr-2">{post.project}</span>}
-                {new Date(post.publishedAt).toLocaleDateString('ko-KR')}
+                <span className="font-mono">{formatDate(post.publishedAt)}</span>
               </p>
-              <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
+              <h2 className="text-xl font-bold tracking-tight mb-2 group-hover:text-white">{post.title}</h2>
               {post.summary && (
-                <p className="text-gray-400 text-sm mb-3">{post.summary}</p>
+                <p className="text-gray-400 text-sm leading-relaxed mb-4">{post.summary}</p>
               )}
               {post.tags && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
@@ -138,10 +124,10 @@ function Blog() {
                         e.preventDefault()
                         setSelectedTag(tag === selectedTag ? null : tag)
                       }}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition ${
+                      className={`text-xs px-2.5 py-0.5 rounded-full cursor-pointer transition ${
                         selectedTag === tag
                           ? 'bg-white text-black'
-                          : 'bg-gray-700 hover:bg-gray-600'
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200'
                       }`}
                     >
                       #{tag}
@@ -151,14 +137,16 @@ function Blog() {
               )}
             </div>
             {post.coverUrl && (
-              <img
-                src={`${post.coverUrl}?w=480&h=300&fit=crop&auto=format`}
-                alt=""
-                loading="lazy"
-                className="w-full sm:w-48 aspect-[16/10] object-cover rounded-lg bg-gray-800 shrink-0"
-              />
+              <div className="w-full sm:w-52 aspect-[16/10] shrink-0 overflow-hidden rounded-xl bg-white/5">
+                <img
+                  src={`${post.coverUrl}?w=520&h=325&fit=crop&auto=format`}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+              </div>
             )}
-          </Link>
+          </GlowCard>
         ))}
       </div>
 

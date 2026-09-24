@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import { PortableText } from '@portabletext/react'
 import client from '../sanityClient'
 import TechBadge from '../components/TechBadge'
-import { getProject } from '../lib/project'
+import { Loading } from '../components/ui'
+import { formatDate, getProject } from '../lib/project'
 
 // 본문에 들어간 이미지와 코드 블록 렌더링 (기본 PortableText는 둘 다 그리지 않는다)
 const bodyComponents = {
@@ -68,51 +69,55 @@ function BlogPost() {
       .finally(() => setLoading(false))
   }, [slug])
 
-  if (loading) return <p className="text-gray-400">불러오는 중...</p>
+  if (loading) return <Loading />
   if (!post) return <p className="text-gray-400">글을 찾을 수 없습니다.</p>
 
   const project = getProject(post)
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex flex-wrap gap-4 mb-6 text-sm">
-        <Link to="/blog" className="text-gray-500 hover:text-white">
-          ← 목록으로
+    <article className="max-w-3xl mx-auto">
+      <div className="rise flex flex-wrap items-center gap-2 mb-8 text-sm">
+        <Link to="/blog" className="rounded-full border border-white/10 px-3 py-1 text-gray-400 hover:border-white/30 hover:text-white">
+          ← 목록
         </Link>
         <Link
           to={`/blog?project=${encodeURIComponent(project)}`}
-          className="text-indigo-300 hover:text-indigo-200"
+          className="rounded-full bg-indigo-500/15 border border-indigo-300/30 px-3 py-1 text-indigo-200 hover:border-indigo-300/60"
         >
           {project} 글 모아 보기
         </Link>
       </div>
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">{post.title}</h1>
-      <p className="text-xs text-gray-500 mb-4">
-        {new Date(post.publishedAt).toLocaleDateString('ko-KR')}
-      </p>
-      {post.tags && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {post.tags.map((tag) => (
-            <span key={tag} className="text-xs bg-gray-700 px-2 py-1 rounded">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-      {post.techStack && post.techStack.length > 0 && (
-        <div className="mb-8">
-          <p className="text-xs text-gray-500 mb-2">기술스택</p>
-          <div className="flex flex-wrap gap-2">
-            {post.techStack.map((tech) => (
-              <TechBadge key={tech.name} tech={tech} />
+      <header className="mb-10 border-b border-white/10 pb-8">
+        <p className="rise font-mono text-xs text-gray-500 mb-3" style={{ '--d': '.05s' }}>
+          {formatDate(post.publishedAt)}
+        </p>
+        <h1 className="rise text-3xl md:text-4xl font-extrabold tracking-tight leading-tight" style={{ '--d': '.1s' }}>
+          {post.title}
+        </h1>
+        {post.tags && (
+          <div className="rise flex flex-wrap gap-1.5 mt-5" style={{ '--d': '.15s' }}>
+            {post.tags.map((tag) => (
+              <span key={tag} className="text-xs bg-white/5 text-gray-400 px-2.5 py-0.5 rounded-full">
+                #{tag}
+              </span>
             ))}
           </div>
-        </div>
-      )}
-      <div className="prose prose-invert max-w-none prose-code:before:content-none prose-code:after:content-none">
+        )}
+        {post.techStack && post.techStack.length > 0 && (
+          <div className="mt-6">
+            <p className="text-xs text-gray-500 mb-2">기술스택</p>
+            <div className="flex flex-wrap gap-2">
+              {post.techStack.map((tech) => (
+                <TechBadge key={tech.name} tech={tech} />
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+      <div className="rise prose prose-invert prose-lg max-w-none prose-headings:tracking-tight prose-a:text-indigo-300 prose-code:text-indigo-200 prose-code:before:content-none prose-code:after:content-none" style={{ '--d': '.2s' }}>
         <PortableText value={post.body} components={bodyComponents} />
       </div>
-    </div>
+    </article>
   )
 }
 

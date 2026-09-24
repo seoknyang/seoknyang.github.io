@@ -1,70 +1,112 @@
 import { useEffect, useState } from 'react'
 import client from '../sanityClient'
 import TechBadge from '../components/TechBadge'
+import ProjectCard from '../components/ProjectCard'
+import { GlowCard, Loading, PageHeader, SectionHeading } from '../components/ui'
+import { POST_SUMMARY_QUERY, OTHER_PROJECT, groupProjects, withProject } from '../lib/project'
+
+const PORTFOLIO_QUERY = `*[_type == "portfolio"] | order(order asc) {
+  _id,
+  title,
+  description,
+  "techStack": techStack[defined(name)]{name, "iconUrl": icon.asset->url},
+  githubUrl,
+  liveUrl,
+  "thumbnail": thumbnail.asset->url
+}`
 
 function Projects() {
-  const [projects, setProjects] = useState([])
+  const [items, setItems] = useState([])
+  const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     client
-      .fetch(`*[_type == "portfolio"] | order(order asc) {
-        _id,
-        title,
-        description,
-        "techStack": techStack[defined(name)]{name, "iconUrl": icon.asset->url},
-        githubUrl,
-        liveUrl,
-        "thumbnail": thumbnail.asset->url
-      }`)
-      .then((data) => setProjects(data))
+      .fetch(`{"items": ${PORTFOLIO_QUERY}, "posts": ${POST_SUMMARY_QUERY}}`)
+      .then(({ items, posts }) => {
+        setItems(items)
+        setPosts(withProject(posts))
+      })
       .catch((err) => console.error('Projects fetch error:', err))
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <p className="text-gray-400">불러오는 중...</p>
+  if (loading) return <Loading />
 
-  if (projects.length === 0)
-    return <p className="text-gray-400">등록된 프로젝트가 없습니다.</p>
+  const devProjects = groupProjects(posts).filter((p) => p.name !== OTHER_PROJECT)
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Projects</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projects.map((project) => (
-          <div key={project._id} className="border border-gray-700 rounded-xl p-6">
-            {project.thumbnail && (
-              <img
-                src={project.thumbnail}
-                alt={project.title}
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
-            )}
-            <h2 className="text-xl font-semibold mb-2">{project.title}</h2>
-            {project.description && (
-              <p className="text-gray-400 text-sm mb-4">{project.description}</p>
-            )}
-            {project.techStack && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {project.techStack.map((tech) => (
-                  <TechBadge key={tech.name} tech={tech} />
-                ))}
-              </div>
-            )}
-            <div className="flex gap-4 text-sm">
-              {project.githubUrl && (
-                <a href={project.githubUrl} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">
-                  GitHub
-                </a>
-              )}
-              {project.liveUrl && (
-                <a href={project.liveUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">
-                  Live
-                </a>
-              )}
+      <PageHeader label="Work" title="Projects">
+        만들어 온 것들입니다. 각 프로젝트를 누르면 개발 과정을 기록한 글을 모아 볼 수 있어요.
+      </PageHeader>
+
+      <div className="space-y-24">
+        {devProjects.length > 0 && (
+          <section>
+            <SectionHeading index="01" label="Dev log" title="개발 프로젝트" />
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {devProjects.map((project, i) => (
+                <ProjectCard key={project.name} project={project} featured={i === 0} />
+              ))}
             </div>
-          </div>
-        ))}
+          </section>
+        )}
+
+        {items.length > 0 && (
+          <section>
+            <SectionHeading
+              index={devProjects.length > 0 ? '02' : '01'}
+              label="Showcase"
+              title="그 밖의 작업"
+            />
+            <div className="grid gap-5 md:grid-cols-2">
+              {items.map((item) => (
+                <GlowCard key={item._id} className="overflow-hidden">
+                  {item.thumbnail && (
+                    <img
+                      src={`${item.thumbnail}?w=900&h=500&fit=crop&auto=format`}
+                      alt=""
+                      loading="lazy"
+                      className="w-full aspect-[16/9] object-cover"
+                    />
+                  )}
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
+                    {item.description && (
+                      <p className="mt-2 text-gray-400 leading-relaxed">{item.description}</p>
+                    )}
+                    {item.techStack?.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {item.techStack.map((tech) => (
+                          <TechBadge key={tech.name} tech={tech} />
+                        ))}
+                      </div>
+                    )}
+                    {(item.githubUrl || item.liveUrl) && (
+                      <div className="mt-5 flex gap-3 text-sm">
+                        {item.githubUrl && (
+                          <a href={item.githubUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/15 px-4 py-1.5 hover:border-white/40">
+                            GitHub
+                          </a>
+                        )}
+                        {item.liveUrl && (
+                          <a href={item.liveUrl} target="_blank" rel="noreferrer" className="rounded-full bg-white px-4 py-1.5 font-semibold text-black">
+                            Live
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </GlowCard>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {devProjects.length === 0 && items.length === 0 && (
+          <p className="text-gray-400">등록된 프로젝트가 없습니다.</p>
+        )}
       </div>
     </div>
   )
