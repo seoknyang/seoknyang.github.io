@@ -1,3 +1,5 @@
+import client from '../sanityClient'
+
 // 글의 프로젝트 이름. project 필드가 없던 예전 devlog 글은
 // 제목 형식 "YYYY-MM-DD 프로젝트명 - 요약"에서 프로젝트명을 꺼낸다.
 const TITLE_PATTERN = /^\d{4}-\d{2}-\d{2}\s+(.+?)\s+-\s/
@@ -23,6 +25,19 @@ export const POST_SUMMARY_QUERY = `*[_type == "post"] | order(publishedAt desc) 
 }`
 
 export const withProject = (posts) => posts.map((p) => ({ ...p, project: getProject(p) }))
+
+// 글 목록은 여러 화면(홈, 블로그, 검색창)이 함께 쓰므로 한 번만 불러온다
+let postsPromise = null
+export function fetchPostSummaries() {
+  postsPromise ??= client
+    .fetch(POST_SUMMARY_QUERY)
+    .then(withProject)
+    .catch((err) => {
+      postsPromise = null
+      throw err
+    })
+  return postsPromise
+}
 
 /**
  * 글을 프로젝트별로 묶는다. 최근에 쓴 프로젝트가 앞, 기타는 맨 뒤.
@@ -62,6 +77,12 @@ export const formatDate = (iso) => new Date(iso).toLocaleDateString('ko-KR')
 export const formatMonth = (iso) => {
   const d = new Date(iso)
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// 2026.10.13 (기록 달력의 날짜 키로도 쓴다. 보는 사람의 현지 날짜 기준)
+export const dayKey = (dateLike) => {
+  const d = new Date(dateLike)
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
 // 프로젝트 기간: 같은 달이면 한 번만

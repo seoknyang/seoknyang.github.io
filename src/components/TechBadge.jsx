@@ -15,7 +15,7 @@ function TechBadge({ tech }) {
 export function TechTile({ tech }) {
   return (
     <div className="group flex flex-col items-center gap-2 w-24 shrink-0">
-      <div className="grid place-items-center w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 transition group-hover:border-indigo-300/50 group-hover:bg-white/[0.06] group-hover:-translate-y-1">
+      <div className="grid place-items-center w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 transition group-hover:border-signal/50 group-hover:bg-white/[0.06] group-hover:-translate-y-1">
         <img src={techIconUrl(tech)} alt="" className="w-9 h-9" onError={hideBrokenIcon} loading="lazy" />
       </div>
       <span className="text-xs text-gray-400 group-hover:text-gray-200 transition text-center">{tech.name}</span>

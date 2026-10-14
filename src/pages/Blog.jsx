@@ -1,158 +1,166 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import client from '../sanityClient'
-import { GlowCard, Loading, PageHeader } from '../components/ui'
-import { POST_SUMMARY_QUERY, formatDate, groupProjects, withProject } from '../lib/project'
+import { AiBadge, GlowCard, Loading, PageHeader, Reveal, SparkIcon } from '../components/ui'
+import { fetchPostSummaries, formatDate, groupProjects, shortTitle } from '../lib/project'
 
 const chipClass = (active) =>
-  `text-xs px-3 py-1 rounded-full border transition ${
+  `shrink-0 text-xs px-3 py-1 rounded-full border transition ${
     active
-      ? 'bg-white text-black border-white'
+      ? 'bg-signal text-ink border-signal font-semibold'
       : 'border-white/15 text-gray-400 hover:border-white/40 hover:text-gray-200'
   }`
 
-const projectCardClass = (active) =>
-  `text-left rounded-2xl border px-4 py-3 transition ${
+const projectClass = (active) =>
+  `shrink-0 flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
     active
-      ? 'border-indigo-300/60 bg-indigo-500/15 shadow-[0_0_30px_-10px_rgb(129_140_248_/_0.8)]'
-      : 'border-white/10 bg-panel/60 hover:border-white/30'
+      ? 'border-signal/60 bg-signal/10 text-white shadow-[0_0_24px_-8px_rgb(196_243_106_/_0.8)]'
+      : 'border-white/10 bg-panel/60 text-gray-400 hover:border-white/30 hover:text-gray-200'
   }`
 
 function Blog() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedTag, setSelectedTag] = useState(null)
+  const [showAllTags, setShowAllTags] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedProject = searchParams.get('project')
+  const selectedTag = searchParams.get('tag')
 
   useEffect(() => {
-    client
-      .fetch(POST_SUMMARY_QUERY)
-      .then((data) => setPosts(withProject(data)))
+    fetchPostSummaries()
+      .then(setPosts)
       .catch((err) => console.error('Blog fetch error:', err))
       .finally(() => setLoading(false))
   }, [])
 
   const projects = groupProjects(posts)
 
-  const selectProject = (name) => {
-    setSelectedTag(null)
-    setSearchParams(name ? { project: name } : {})
+  const setFilter = (project, tag) => {
+    const next = {}
+    if (project) next.project = project
+    if (tag) next.tag = tag
+    setSearchParams(next, { replace: true })
   }
 
-  const projectPosts = selectedProject
-    ? posts.filter((p) => p.project === selectedProject)
-    : posts
-  const allTags = [...new Set(projectPosts.flatMap((p) => p.tags ?? []))]
-  const filteredPosts = selectedTag
-    ? projectPosts.filter((p) => p.tags?.includes(selectedTag))
-    : projectPosts
+  const projectPosts = selectedProject ? posts.filter((p) => p.project === selectedProject) : posts
+  const allTags = [...new Set(projectPosts.flatMap((p) => p.tags ?? []))].filter((t) => t !== 'devlog')
+  // 태그가 많으면 앞의 몇 개만 보여 주되, 고른 태그는 늘 보이게
+  const TAG_LIMIT = 12
+  const visibleTags =
+    showAllTags || allTags.length <= TAG_LIMIT
+      ? allTags
+      : [...new Set([...allTags.slice(0, TAG_LIMIT), ...(selectedTag ? [selectedTag] : [])])]
+  const filteredPosts = selectedTag ? projectPosts.filter((p) => p.tags?.includes(selectedTag)) : projectPosts
 
   if (loading) return <Loading />
 
-  if (posts.length === 0)
-    return <p className="text-gray-400">작성된 글이 없습니다.</p>
+  if (posts.length === 0) return <p className="text-gray-400">작성된 글이 없습니다.</p>
 
   return (
     <div className="max-w-4xl">
-      <PageHeader label="Writing" title="Blog">
-        프로젝트를 만들며 매일 남기는 개발 기록입니다.
+      <PageHeader label="Devlog" title={<>AI가 쓰는 <span className="text-gradient">개발 기록</span></>}>
+        하루 작업이 끝나면 AI가 그날의 커밋 내역을 읽고 이 글들을 씁니다. 프로젝트별로 모아 보거나 태그로 걸러 볼 수 있어요.
       </PageHeader>
 
-      <section className="mb-8">
-        <p className="font-mono text-xs tracking-widest text-gray-500 uppercase mb-3">Projects</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <button onClick={() => selectProject(null)} className={projectCardClass(selectedProject === null)}>
-            <p className="font-semibold truncate">전체</p>
-            <p className="text-xs text-gray-500 mt-1">{posts.length}개의 글</p>
+      <section className="rise mb-6" style={{ '--d': '.22s' }}>
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+          <button onClick={() => setFilter(null, null)} className={projectClass(selectedProject === null)}>
+            전체 <span className="font-mono text-xs text-gray-500">{posts.length}</span>
           </button>
           {projects.map((project) => (
             <button
               key={project.name}
-              onClick={() => selectProject(project.name === selectedProject ? null : project.name)}
-              className={projectCardClass(selectedProject === project.name)}
+              onClick={() => setFilter(project.name === selectedProject ? null : project.name, null)}
+              className={projectClass(selectedProject === project.name)}
             >
-              <p className="font-semibold truncate" title={project.name}>{project.name}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {project.count}개의 글, 최근 {formatDate(project.latest)}
-              </p>
+              {project.name} <span className="font-mono text-xs text-gray-500">{project.count}</span>
             </button>
           ))}
         </div>
       </section>
 
       {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-10">
-          <button onClick={() => setSelectedTag(null)} className={chipClass(selectedTag === null)}>
+        <div className="rise no-scrollbar -mx-4 mb-10 flex gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0" style={{ '--d': '.28s' }}>
+          <button onClick={() => setFilter(selectedProject, null)} className={chipClass(selectedTag === null)}>
             전체 태그
           </button>
-          {allTags.map((tag) => (
+          {visibleTags.map((tag) => (
             <button
               key={tag}
-              onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+              onClick={() => setFilter(selectedProject, tag === selectedTag ? null : tag)}
               className={chipClass(selectedTag === tag)}
             >
               #{tag}
             </button>
           ))}
+          {allTags.length > TAG_LIMIT && (
+            <button
+              onClick={() => setShowAllTags((v) => !v)}
+              className="shrink-0 px-2 py-1 font-mono text-xs text-gray-500 transition hover:text-signal"
+            >
+              {showAllTags ? '접기' : `+${allTags.length - TAG_LIMIT} 더 보기`}
+            </button>
+          )}
         </div>
       )}
 
-      <div className="flex flex-col gap-5">
-        {filteredPosts.map((post) => (
-          <GlowCard
-            key={post._id}
-            as={Link}
-            to={`/blog/${post.slug}`}
-            className="group flex flex-col-reverse sm:flex-row gap-5 p-6"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 mb-2">
-                {!selectedProject && <span className="text-indigo-300 mr-2">{post.project}</span>}
-                <span className="font-mono">{formatDate(post.publishedAt)}</span>
-              </p>
-              <h2 className="text-xl font-bold tracking-tight mb-2 group-hover:text-white">{post.title}</h2>
-              {post.summary && (
-                <p className="text-gray-400 text-sm leading-relaxed mb-4">{post.summary}</p>
-              )}
-              {post.tags && (
-                <div className="flex flex-wrap gap-1.5">
-                  {post.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setSelectedTag(tag === selectedTag ? null : tag)
-                      }}
-                      className={`text-xs px-2.5 py-0.5 rounded-full cursor-pointer transition ${
-                        selectedTag === tag
-                          ? 'bg-white text-black'
-                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200'
-                      }`}
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+      <p className="mb-4 flex items-center gap-2 font-mono text-xs text-gray-500">
+        <SparkIcon className="w-3 h-3 text-signal" />
+        기록 {filteredPosts.length}개
+      </p>
+
+      <div className="flex flex-col gap-4">
+        {filteredPosts.map((post, i) => (
+          <Reveal key={post._id} delay={Math.min(i, 4) * 0.05}>
+            <GlowCard as={Link} to={`/blog/${post.slug}`} className="group flex flex-col-reverse gap-5 p-5 sm:flex-row sm:p-6">
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  {!selectedProject && <span className="text-signal/80">{post.project}</span>}
+                  <span className="font-mono">{formatDate(post.publishedAt)}</span>
+                  <AiBadge />
+                </div>
+                <h2 className="mb-2 text-lg font-bold leading-snug tracking-tight group-hover:text-white sm:text-xl">
+                  {shortTitle(post.title)}
+                </h2>
+                {post.summary && <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-gray-400">{post.summary}</p>}
+                {post.tags && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {post.tags
+                      .filter((t) => t !== 'devlog')
+                      .map((tag) => (
+                        <span
+                          key={tag}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setFilter(selectedProject, tag === selectedTag ? null : tag)
+                          }}
+                          className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs transition ${
+                            selectedTag === tag
+                              ? 'bg-signal text-ink'
+                              : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                          }`}
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                  </div>
+                )}
+              </div>
+              {post.coverUrl && (
+                <div className="aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-white/5 sm:w-52">
+                  <img
+                    src={`${post.coverUrl}?w=520&h=325&fit=crop&auto=format`}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                  />
                 </div>
               )}
-            </div>
-            {post.coverUrl && (
-              <div className="w-full sm:w-52 aspect-[16/10] shrink-0 overflow-hidden rounded-xl bg-white/5">
-                <img
-                  src={`${post.coverUrl}?w=520&h=325&fit=crop&auto=format`}
-                  alt=""
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                />
-              </div>
-            )}
-          </GlowCard>
+            </GlowCard>
+          </Reveal>
         ))}
       </div>
 
-      {filteredPosts.length === 0 && (
-        <p className="text-gray-400">해당 조건의 글이 없습니다.</p>
-      )}
+      {filteredPosts.length === 0 && <p className="text-gray-400">해당 조건의 글이 없습니다.</p>}
     </div>
   )
 }

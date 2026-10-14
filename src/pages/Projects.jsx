@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import client from '../sanityClient'
 import TechBadge from '../components/TechBadge'
 import ProjectCard from '../components/ProjectCard'
-import { GlowCard, Loading, PageHeader, SectionHeading } from '../components/ui'
+import { GlowCard, Loading, PageHeader, Reveal, SectionHeading } from '../components/ui'
 import { POST_SUMMARY_QUERY, OTHER_PROJECT, groupProjects, withProject } from '../lib/project'
 
 const PORTFOLIO_QUERY = `*[_type == "portfolio"] | order(order asc) {
@@ -37,17 +37,19 @@ function Projects() {
 
   return (
     <div>
-      <PageHeader label="Work" title="Projects">
-        만들어 온 것들입니다. 각 프로젝트를 누르면 개발 과정을 기록한 글을 모아 볼 수 있어요.
+      <PageHeader label="Projects" title={<>AI와 만든 <span className="text-gradient">토이 프로젝트</span></>}>
+        아이디어 하나에서 시작해 AI와 대화하며 만든 것들입니다. 프로젝트를 누르면 AI가 남긴 개발 기록을 처음부터 따라가 볼 수 있어요.
       </PageHeader>
 
       <div className="space-y-24">
         {devProjects.length > 0 && (
           <section>
-            <SectionHeading index="01" label="Dev log" title="개발 프로젝트" />
+            <SectionHeading index="01" label="Built with AI" title="개발 중인 프로젝트" />
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {devProjects.map((project, i) => (
-                <ProjectCard key={project.name} project={project} featured={i === 0} />
+                <Reveal key={project.name} delay={(i % 3) * 0.08} className="h-full">
+                  <ProjectCard project={project} featured={i === 0} index={i} />
+                </Reveal>
               ))}
             </div>
           </section>
@@ -91,7 +93,7 @@ function Projects() {
                           </a>
                         )}
                         {item.liveUrl && (
-                          <a href={item.liveUrl} target="_blank" rel="noreferrer" className="rounded-full bg-white px-4 py-1.5 font-semibold text-black">
+                          <a href={item.liveUrl} target="_blank" rel="noreferrer" className="rounded-full bg-signal px-4 py-1.5 font-semibold text-ink">
                             Live
                           </a>
                         )}
